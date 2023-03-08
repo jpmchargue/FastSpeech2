@@ -1,0 +1,7 @@
+mfa model download acoustic english_us_arpa
+mfa model download dictionary english_us_arpa
+
+mfa server init
+mfa server start
+
+mfa align raw_data/VCTK lexicon/librispeech-lexicon.txt english_us_arpa preprocessed_data/VCTK
