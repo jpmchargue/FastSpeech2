@@ -150,7 +150,7 @@ class Verifier(nn.Module):
             count += 1
             i += 70
         d_vector = d_vector.view(-1)
-        return d_vector.detach().cpu() / count
+        return d_vector.detach().cpu().numpy() / count
 
     def get_grad_embedding(self, spectrogram):
         """

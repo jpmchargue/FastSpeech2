@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 import audio as Audio
+import fingerprint as Fingerprint
 
 
 class Preprocessor:
@@ -62,11 +63,14 @@ class Preprocessor:
         n_frames = 0
         pitch_scaler = StandardScaler()
         energy_scaler = StandardScaler()
+        verifier = Fingerprint.model.Verifier()
 
         # Compute pitch, energy, duration, and mel-spectrogram
         speakers = {}
+        fingerprints = {}
         for i, speaker in enumerate(tqdm(os.listdir(self.in_dir))):
             speakers[speaker] = i
+            fingerprints[speaker] = np.zeros(256)
             for wav_name in os.listdir(os.path.join(self.in_dir, speaker)):
                 if ".wav" not in wav_name:
                     continue
@@ -228,6 +232,8 @@ class Preprocessor:
                 pos += d
             energy = energy[: len(duration)]
 
+        # Compute sample embedding
+
         # Save files
         dur_filename = "{}-duration-{}.npy".format(speaker, basename)
         np.save(os.path.join(self.out_dir, "duration", dur_filename), duration)
@@ -248,6 +254,7 @@ class Preprocessor:
             "|".join([basename, speaker, text, raw_text]),
             self.remove_outlier(pitch),
             self.remove_outlier(energy),
+            fingerprint,
             mel_spectrogram.shape[1],
         )
 
