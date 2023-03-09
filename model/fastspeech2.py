@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from transformer import Encoder, Decoder, PostNet
+from transformer import Encoder, Mixer, Decoder, PostNet
 from .modules import VarianceAdaptor
 from utils.tools import get_mask_from_lengths
 
@@ -18,6 +18,11 @@ class FastSpeech2(nn.Module):
         self.model_config = model_config
 
         self.encoder = Encoder(model_config)
+        self.mixer = Mixer(model_config)
+        self.mixer_linear = nn.Linear(
+            model_config["transformer"]["decoder_hidden"] + 256,
+            model_config["transformer"]["decoder_hidden"]
+        )
         self.variance_adaptor = VarianceAdaptor(preprocess_config, model_config)
         self.decoder = Decoder(model_config)
         self.mel_linear = nn.Linear(
@@ -52,6 +57,7 @@ class FastSpeech2(nn.Module):
         p_targets=None,
         e_targets=None,
         d_targets=None,
+        fingerprint=None,
         p_control=1.0,
         e_control=1.0,
         d_control=1.0,
@@ -65,10 +71,14 @@ class FastSpeech2(nn.Module):
 
         output = self.encoder(texts, src_masks)
 
-        if self.speaker_emb is not None:
-            output = output + self.speaker_emb(speakers).unsqueeze(1).expand(
-                -1, max_src_len, -1
-            )
+        #if self.speaker_emb is not None:
+        #    output = output + self.speaker_emb(speakers).unsqueeze(1).expand(
+        #        -1, max_src_len, -1
+        #    )
+
+        output = self.mixer(output, fingerprint, src_masks)
+
+        output = self.mixer_linear(output)
 
         (
             output,

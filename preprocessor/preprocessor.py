@@ -2,8 +2,10 @@ import os
 import random
 import json
 
+import math
 import tgt
 import librosa
+import torch
 import numpy as np
 import pyworld as pw
 from scipy.interpolate import interp1d
@@ -12,6 +14,9 @@ from tqdm import tqdm
 
 import audio as Audio
 import fingerprint as Fingerprint
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Preprocessor:
@@ -51,19 +56,20 @@ class Preprocessor:
             config["preprocessing"]["mel"]["mel_fmax"],
         )
 
+        self.verifier = Fingerprint.model.Verifier()
+
     def build_from_path(self):
         os.makedirs((os.path.join(self.out_dir, "mel")), exist_ok=True)
         os.makedirs((os.path.join(self.out_dir, "pitch")), exist_ok=True)
         os.makedirs((os.path.join(self.out_dir, "energy")), exist_ok=True)
         os.makedirs((os.path.join(self.out_dir, "duration")), exist_ok=True)
-        os.makedirs((os.path.join(self.out_dir, "encoding")), exist_ok=True)
+        os.makedirs((os.path.join(self.out_dir, "fingerprint")), exist_ok=True)
 
         print("Processing Data ...")
         out = list()
         n_frames = 0
         pitch_scaler = StandardScaler()
         energy_scaler = StandardScaler()
-        verifier = Fingerprint.model.Verifier()
 
         # Compute pitch, energy, duration, and mel-spectrogram
         speakers = {}
@@ -84,7 +90,7 @@ class Preprocessor:
                     if ret is None:
                         continue
                     else:
-                        info, pitch, energy, n = ret
+                        info, pitch, energy, fingerprint, n = ret
                     out.append(info)
 
                 if len(pitch) > 0:
@@ -92,7 +98,14 @@ class Preprocessor:
                 if len(energy) > 0:
                     energy_scaler.partial_fit(energy.reshape((-1, 1)))
 
+                fingerprints[speaker] += fingerprint
+
                 n_frames += n
+            
+            # Save speaker fingerprint
+            fingerprints[speaker] /= len(os.listdir(os.path.join(self.in_dir, speaker)))
+            finger_filename = "{}-fingerprint.npy".format(speaker)
+            np.save(os.path.join(self.out_dir, "fingerprint", finger_filename), fingerprints[speaker])
 
         print("Computing statistic quantities ...")
         # Perform normalization if necessary
@@ -174,8 +187,8 @@ class Preprocessor:
             return None
 
         # Read and trim wav files
-        wav, _ = librosa.load(wav_path)
-        wav = wav[
+        raw, sr = librosa.load(wav_path)
+        wav = raw[
             int(self.sampling_rate * start) : int(self.sampling_rate * end)
         ].astype(np.float32)
 
@@ -233,6 +246,8 @@ class Preprocessor:
             energy = energy[: len(duration)]
 
         # Compute sample embedding
+        verifier_spectrogram = (np.transpose(librosa.power_to_db(librosa.feature.melspectrogram(y=raw, sr=sr, n_fft=math.ceil(sr*0.025), hop_length=math.ceil(sr*0.01), n_mels=40), ref=np.max)))
+        fingerprint = self.verifier.get_embedding(verifier_spectrogram).numpy()
 
         # Save files
         dur_filename = "{}-duration-{}.npy".format(speaker, basename)

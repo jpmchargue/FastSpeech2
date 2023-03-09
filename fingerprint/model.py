@@ -137,7 +137,6 @@ class Verifier(nn.Module):
         Then, all embedding vectors are L2-normalized and averaged.
         """
         L = len(spectrogram)
-        print(L)
         d_vector = torch.zeros(params.verifier_hidden_size).to(device)
         count = 0
         i = 0
@@ -150,7 +149,7 @@ class Verifier(nn.Module):
             count += 1
             i += 70
         d_vector = d_vector.view(-1)
-        return d_vector.detach().cpu().numpy() / count
+        return d_vector.detach().cpu() / count
 
     def get_grad_embedding(self, spectrogram):
         """

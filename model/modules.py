@@ -136,12 +136,12 @@ class VarianceAdaptor(nn.Module):
             x, mel_len = self.length_regulator(x, duration_rounded, max_len)
             mel_mask = get_mask_from_lengths(mel_len)
 
-        if self.pitch_feature_level == "frame_level":
+        if self.pitch_feature_level == "frame_level": # not used
             pitch_prediction, pitch_embedding = self.get_pitch_embedding(
                 x, pitch_target, mel_mask, p_control
             )
             x = x + pitch_embedding
-        if self.energy_feature_level == "frame_level":
+        if self.energy_feature_level == "frame_level": # not used
             energy_prediction, energy_embedding = self.get_energy_embedding(
                 x, energy_target, mel_mask, p_control
             )

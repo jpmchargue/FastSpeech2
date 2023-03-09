@@ -5,38 +5,48 @@ import numpy as np
 import random
 from sklearn.preprocessing import StandardScaler
 import torch
+import librosa
+import math
 import umap
+
+import fingerprint as Fingerprint
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 cwd = os.getcwd()
 
-LOAD_MODEL = True
 NUM_SPEAKERS_PLOTTED = 10
 NUM_UTTERANCES = 10
+DATA_PATH = "raw_data/VCTK"
 
-params = Parameters()
-verifier = Verifier()
-if LOAD_MODEL:
-    print("Loading model...")
-    checkpoint_name = "verifier_norm_state20000.pt"
-    if os.path.exists(os.path.join(cwd, checkpoint_name)):
-        verifier.load_state_dict(torch.load(checkpoint_name))
+verifier = Fingerprint.model.Verifier()
+print("Loading model...")
+checkpoint_name = "fingerprint/verifier_state35000.pt"
+if os.path.exists(os.path.join(cwd, checkpoint_name)):
+    verifier.load_state_dict(torch.load(checkpoint_name))
 
 print("Loading random sample...")
-speakers = random.sample(os.listdir(params.DATA_PATH), NUM_SPEAKERS_PLOTTED)
+speakers = random.sample(os.listdir(DATA_PATH), NUM_SPEAKERS_PLOTTED)
 all_spectrograms = []
 for speaker in speakers:
-    names = random.sample(os.listdir(os.path.join(params.DATA_PATH, speaker)), NUM_UTTERANCES)
-    paths = [os.path.join(params.DATA_PATH, speaker, name) for name in names]
+    print(speaker)
+    names = random.sample([name for name in os.listdir(os.path.join(DATA_PATH, speaker)) if name.endswith("wav")], NUM_UTTERANCES)
+    paths = [os.path.join(DATA_PATH, speaker, name) for name in names]
     for p in paths:
         print(p)
-    spectrograms = [np.load(path) for path in paths]
+    spectrograms = []
+    for path in paths:
+        y, sr = librosa.load(path)
+        S = (np.transpose(librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_fft=math.ceil(sr*0.025), hop_length=math.ceil(sr*0.01), n_mels=40), ref=np.max)))
+        #plt.imshow(S)
+        #plt.show()
+        spectrograms.append(S)
     all_spectrograms.extend(spectrograms)
 
 print("Embedding...")
 all_embeddings = torch.stack([verifier.get_embedding(spectrogram) for spectrogram in all_spectrograms])
 
+print("Got embeddings!")
 for embedding in all_embeddings:
     print(all_embeddings)
 
@@ -54,5 +64,5 @@ plt.scatter(
     c=labels)
 plt.legend(handles=mp)
 plt.gca().set_aspect('equal', 'datalim')
-plt.title('UMAP Projection of Speaker Embeddings (20000)')
+plt.title('UMAP Projection of Speaker Embeddings (35000)')
 plt.show()

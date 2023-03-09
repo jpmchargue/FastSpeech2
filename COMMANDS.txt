@@ -1,3 +1,26 @@
+conda install pip
+
+conda create -n fastspeech python==3.8.16
+
+conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=11.0 -c pytorch
+pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+pip install -r requirements.txt
+conda install --file requirements.txt
+conda install pyyaml==5.4.1
+
+
+python prepare_align.py config/LJSpeech/preprocess.yaml
+
+python preprocess.py config/LJSpeech/preprocess.yaml
+python preprocess.py config/VCTK/preprocess.yaml
+
+python train.py -p config/LJSpeech/preprocess.yaml -m config/LJSpeech/model.yaml -t config/LJSpeech/train.yaml
+python train.py -p config/VCTK/preprocess.yaml -m config/VCTK/model.yaml -t config/VCTK/train.yaml
+
+python synthesize.py --text "Hey Doctor Luwiki! This is the quality of fast speech after a hundred thousand iterations." --restore_step 100000 --mode single -p config/LJSpeech/preprocess.yaml -m config/LJSpeech/model.yaml -t config/LJSpeech/train.yaml
+
+
+*** MFA Commands ***
 mfa model download acoustic english_us_arpa
 mfa model download dictionary english_us_arpa
 
@@ -5,3 +28,15 @@ mfa server init
 mfa server start
 
 mfa align raw_data/VCTK lexicon/librispeech-lexicon.txt english_us_arpa preprocessed_data/VCTK
+
+HOW TO CREATE THE ENVIRONMENT
+1. Create a new Conda environment with Python 3.8.16:
+	conda create -n insertnamehere python==3.8.16
+2. Activate the environment.
+3. Run the following command to install the correct Pytorch version WITH CUDA:
+	pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+4. Open requirements.txt, remove the torch requirement, and change the scipy requirement version from 1.5.0 to 1.6.0.
+5. Install all updated requirements from requirements.txt:
+	pip install -r requirements.txt
+6. Downgrade the 'protobuf' library to 3.20.0.
+	pip3 install --upgrade protobuf==3.20.0
