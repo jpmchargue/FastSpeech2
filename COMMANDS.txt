@@ -10,14 +10,19 @@ conda install pyyaml==5.4.1
 
 
 python prepare_align.py config/LJSpeech/preprocess.yaml
+python prepare_align.py config/VCTK/preprocess.yaml
 
 python preprocess.py config/LJSpeech/preprocess.yaml
 python preprocess.py config/VCTK/preprocess.yaml
 
 python train.py -p config/LJSpeech/preprocess.yaml -m config/LJSpeech/model.yaml -t config/LJSpeech/train.yaml
 python train.py -p config/VCTK/preprocess.yaml -m config/VCTK/model.yaml -t config/VCTK/train.yaml
+python train.py -p config/VCTK/preprocess.yaml -m config/VCTK/model.yaml -t config/VCTK/train.yaml --restore_step 50000
 
 python synthesize.py --text "Hey Doctor Luwiki! This is the quality of fast speech after a hundred thousand iterations." --restore_step 100000 --mode single -p config/LJSpeech/preprocess.yaml -m config/LJSpeech/model.yaml -t config/LJSpeech/train.yaml
+python clone.py --text "This is an initial test of the voice cloning." --fingerprint preprocessed_data\VCTK\fingerprint\p259-fingerprint.npy --restore_step 50000 --mode single -p config/VCTK/preprocess.yaml -m config/VCTK/model.yaml -t config/VCTK/train.yaml
+python clone.py --text "I just cloned my own voice" --fingerprint DEV\me.npy --restore_step 50000 --mode single -p config/VCTK/preprocess.yaml -m config/VCTK/model.yaml -t config/VCTK/train.yaml
+python clone.py --text "This is a clone of an unseen speakers voice" --fingerprint DEV\LJ.npy --restore_step 50000 --mode single -p config/VCTK/preprocess.yaml -m config/VCTK/model.yaml -t config/VCTK/train.yaml
 
 
 *** MFA Commands ***

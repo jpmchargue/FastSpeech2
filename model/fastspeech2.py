@@ -57,7 +57,7 @@ class FastSpeech2(nn.Module):
         p_targets=None,
         e_targets=None,
         d_targets=None,
-        fingerprint=None,
+        fingerprints=None,
         p_control=1.0,
         e_control=1.0,
         d_control=1.0,
@@ -76,7 +76,7 @@ class FastSpeech2(nn.Module):
         #        -1, max_src_len, -1
         #    )
 
-        output = self.mixer(output, fingerprint, src_masks)
+        output = self.mixer(output, fingerprints, src_masks)
 
         output = self.mixer_linear(output)
 

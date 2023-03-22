@@ -111,7 +111,7 @@ class Mixer(nn.Module):
         d_word_vec = config["transformer"]["encoder_hidden"]
         n_head = config["transformer"]["encoder_head"] * 2 #config["transformer"]["encoder_head"]
         d_k = d_v = (
-            config["transformer"]["encoder_hidden"]
+            (config["transformer"]["encoder_hidden"] + 256)
             // config["transformer"]["encoder_head"]
         )
         d_model = config["transformer"]["encoder_hidden"] + 256 #config["transformer"]["encoder_hidden"]
@@ -122,9 +122,6 @@ class Mixer(nn.Module):
         self.max_seq_len = config["max_seq_len"]
         self.d_model = d_model
 
-        self.src_word_emb = nn.Embedding(
-            n_src_vocab, d_word_vec, padding_idx=Constants.PAD
-        )
         self.position_enc = nn.Parameter(
             get_sinusoid_encoding_table(n_position, d_word_vec).unsqueeze(0),
             requires_grad=False,
@@ -148,18 +145,17 @@ class Mixer(nn.Module):
 
         # -- Forward
         if not self.training and src_seq.shape[1] > self.max_seq_len:
-            enc_output = self.src_word_emb(src_seq) + get_sinusoid_encoding_table(
+            enc_output = src_seq + get_sinusoid_encoding_table(
                 src_seq.shape[1], self.d_model
             )[: src_seq.shape[1], :].unsqueeze(0).expand(batch_size, -1, -1).to(
                 src_seq.device
             )
         else:
-            enc_output = self.src_word_emb(src_seq) + self.position_enc[
+            enc_output = src_seq + self.position_enc[
                 :, :max_len, :
             ].expand(batch_size, -1, -1)
 
-        print(src_seq.shape)
-        src_seq = torch.cat((src_seq, fingerprint.repeat(batch_size, max_len, 1)), dim=2)
+        enc_output = torch.cat((enc_output, fingerprint.repeat(1, max_len).view(batch_size, -1, 256)), dim=2)
 
         for enc_layer in self.layer_stack:
             enc_output, enc_slf_attn = enc_layer(

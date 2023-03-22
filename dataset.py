@@ -32,7 +32,7 @@ class Dataset(Dataset):
     def __getitem__(self, idx):
         basename = self.basename[idx]
         speaker = self.speaker[idx]
-        speaker_id = self.speaker_map[speaker]
+        #speaker_id = self.speaker_map[speaker]
         raw_text = self.raw_text[idx]
         phone = np.array(text_to_sequence(self.text[idx], self.cleaners))
         mel_path = os.path.join(
@@ -68,7 +68,7 @@ class Dataset(Dataset):
 
         sample = {
             "id": basename,
-            "speaker": speaker_id,
+            "speaker": 0,
             "text": phone,
             "raw_text": raw_text,
             "mel": mel,
@@ -78,9 +78,9 @@ class Dataset(Dataset):
             "fingerprint": fingerprint,
         }
 
-        print(speaker_id)
-        print(basename)
-        print(fingerprint)
+        #print(speaker_id)
+        #print(basename)
+        #print(fingerprint)
 
         return sample
 
@@ -120,6 +120,7 @@ class Dataset(Dataset):
         pitches = pad_1D(pitches)
         energies = pad_1D(energies)
         durations = pad_1D(durations)
+        fingerprints = np.stack(fingerprints)
 
         pack = (
             ids,
@@ -137,6 +138,7 @@ class Dataset(Dataset):
             fingerprints,
         )
         #print(pack)
+        #input()
         return pack
 
     def collate_fn(self, data):

@@ -77,6 +77,7 @@ class Preprocessor:
         for i, speaker in enumerate(tqdm(os.listdir(self.in_dir))):
             speakers[speaker] = i
             fingerprints[speaker] = np.zeros(256)
+            valid_fingerprints = 0
             for wav_name in os.listdir(os.path.join(self.in_dir, speaker)):
                 if ".wav" not in wav_name:
                     continue
@@ -98,12 +99,14 @@ class Preprocessor:
                 if len(energy) > 0:
                     energy_scaler.partial_fit(energy.reshape((-1, 1)))
 
-                fingerprints[speaker] += fingerprint
+                if not np.any(np.isnan(fingerprint)):
+                    fingerprints[speaker] += fingerprint
+                    valid_fingerprints += 1
 
                 n_frames += n
             
             # Save speaker fingerprint
-            fingerprints[speaker] /= len(os.listdir(os.path.join(self.in_dir, speaker)))
+            fingerprints[speaker] /= valid_fingerprints
             finger_filename = "{}-fingerprint.npy".format(speaker)
             np.save(os.path.join(self.out_dir, "fingerprint", finger_filename), fingerprints[speaker])
 

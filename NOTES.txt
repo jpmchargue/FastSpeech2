@@ -1,0 +1,6 @@
+The speakers with INVALID FINGERPRINTS are: 231, 232, 250, 253, 257, 266, 273, 285
+
+The 7 speakers with the MOST DATA are: 236, 239, 250, 259, 264, 274, 283
+
+TODO:
+- figure out how to redesign validation log to switch target speaker AND try synthesis with a different message

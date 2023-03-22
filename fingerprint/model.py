@@ -133,7 +133,7 @@ class Verifier(nn.Module):
         Compute the overall embedding vector for a sound sample,
         as inferred by the verifier network.
         This is calculated by finding the embedding vector for each point
-        of a sliding window of length 160 with 50% overlap.
+        of a sliding window of length 140 with 50% overlap.
         Then, all embedding vectors are L2-normalized and averaged.
         """
         L = len(spectrogram)
@@ -144,8 +144,10 @@ class Verifier(nn.Module):
             input = torch.from_numpy(spectrogram[i:i+140]).to(device)
             input = torch.unsqueeze(input, dim=0)
             embedding = self.forward(input)
-            norm = embedding / torch.linalg.norm(embedding)
-            d_vector = d_vector + norm
+            norm = torch.linalg.norm(embedding)
+            if norm > 0:
+                embedding = embedding / norm
+                d_vector = d_vector + embedding
             count += 1
             i += 70
         d_vector = d_vector.view(-1)
@@ -156,7 +158,7 @@ class Verifier(nn.Module):
         Compute the overall embedding vector for a sound sample,
         as inferred by the verifier network.
         This is calculated by finding the embedding vector for each point
-        of a sliding window of length 160 with 50% overlap.
+        of a sliding window of length 140 with 50% overlap.
         Then, all embedding vectors are L2-normalized and averaged.
         """
         L = len(spectrogram)
