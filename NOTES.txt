@@ -3,4 +3,8 @@ The speakers with INVALID FINGERPRINTS are: 231, 232, 250, 253, 257, 266, 273, 2
 The 7 speakers with the MOST DATA are: 236, 239, 250, 259, 264, 274, 283
 
 TODO:
-- figure out how to redesign validation log to switch target speaker AND try synthesis with a different message
+- create transformer-based speaker verification system
+- compare transformer-based SV runtime against LSTM-based SV runtime
+- assuming it's a lot faster, train it on LibriSpeech, VoxCeleb, and as much other data as you can get
+- preprocess the data dump somehow?
+- train the adapted version of FastSpeech on the massive data dump, gathering fingerprints ad hoc
